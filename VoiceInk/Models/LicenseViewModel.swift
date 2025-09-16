@@ -20,63 +20,30 @@ class LicenseViewModel: ObservableObject {
     private let userDefaults = UserDefaults.standard
     
     init() {
+        // Bypass all license verification - always licensed
+        licenseState = .licensed
+        // Keep the rest of the initialization for UI compatibility
         loadLicenseState()
     }
     
     func startTrial() {
-        // Only set trial start date if it hasn't been set before
-        if userDefaults.trialStartDate == nil {
-            userDefaults.trialStartDate = Date()
-            licenseState = .trial(daysRemaining: trialPeriodDays)
-            NotificationCenter.default.post(name: .licenseStatusChanged, object: nil)
-        }
+        // Do nothing - app is always licensed
+        // This method is kept for API compatibility
     }
     
     private func loadLicenseState() {
-        // Check for existing license key
+        // Always set license as verified - bypass all trial logic
+        licenseState = .licensed
+        
+        // Check for existing license key for UI purposes only
         if let licenseKey = userDefaults.licenseKey {
             self.licenseKey = licenseKey
-            
-            // If we have a license key, trust that it's licensed
-            // Skip server validation on startup
-            if userDefaults.activationId != nil || !userDefaults.bool(forKey: "VoiceInkLicenseRequiresActivation") {
-                licenseState = .licensed
-                activationsLimit = userDefaults.activationsLimit
-                return
-            }
-        }
-        
-        // Check if this is first launch
-        let hasLaunchedBefore = userDefaults.bool(forKey: "VoiceInkHasLaunchedBefore")
-        if !hasLaunchedBefore {
-            // First launch - start trial automatically
-            userDefaults.set(true, forKey: "VoiceInkHasLaunchedBefore")
-            startTrial()
-            return
-        }
-        
-        // Only check trial if not licensed and not first launch
-        if let trialStartDate = userDefaults.trialStartDate {
-            let daysSinceTrialStart = Calendar.current.dateComponents([.day], from: trialStartDate, to: Date()).day ?? 0
-            
-            if daysSinceTrialStart >= trialPeriodDays {
-                licenseState = .trialExpired
-            } else {
-                licenseState = .trial(daysRemaining: trialPeriodDays - daysSinceTrialStart)
-            }
-        } else {
-            // No trial has been started yet - start it now
-            startTrial()
         }
     }
     
     var canUseApp: Bool {
-        switch licenseState {
-        case .licensed, .trial:
-            return true
-        case .trialExpired:
-            return false
-        }
+        // Always allow app usage - bypass license verification
+        return true
     }
     
     func openPurchaseLink() {
@@ -171,19 +138,25 @@ class LicenseViewModel: ObservableObject {
     }
     
     func removeLicense() {
-        // Remove both license key and trial data
+        // Remove license key but keep app licensed
         userDefaults.licenseKey = nil
         userDefaults.activationId = nil
         userDefaults.set(false, forKey: "VoiceInkLicenseRequiresActivation")
         userDefaults.trialStartDate = nil
-        userDefaults.set(false, forKey: "VoiceInkHasLaunchedBefore")  // Allow trial to restart
+        userDefaults.set(false, forKey: "VoiceInkHasLaunchedBefore")
         
+<<<<<<< HEAD
         userDefaults.activationsLimit = 0
         
         licenseState = .trial(daysRemaining: trialPeriodDays)  // Reset to trial state
         licenseKey = ""
         validationMessage = nil
         activationsLimit = 0
+=======
+        licenseKey = ""
+        validationMessage = nil
+        // Keep license state as licensed - app remains fully functional
+>>>>>>> 801ad63 (Custom mods)
         NotificationCenter.default.post(name: .licenseStatusChanged, object: nil)
         loadLicenseState()
     }

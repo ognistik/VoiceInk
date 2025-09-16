@@ -353,34 +353,14 @@ class WhisperState: NSObject, ObservableObject {
                     if await checkCancellationAndCleanup() { return }
                 }
             }
-
-            transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
-
-        } catch {
-            let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            let recoverySuggestion = (error as? LocalizedError)?.recoverySuggestion ?? ""
-            let fullErrorText = recoverySuggestion.isEmpty ? errorDescription : "\(errorDescription) \(recoverySuggestion)"
-
-            transcription.text = "Transcription Failed: \(fullErrorText)"
-            transcription.transcriptionStatus = TranscriptionStatus.failed.rawValue
-        }
-
-        // --- Finalize and save ---
-        try? modelContext.save()
-        
-        if transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
-            NotificationCenter.default.post(name: .transcriptionCompleted, object: transcription)
-        }
-
-        if await checkCancellationAndCleanup() { return }
-
-        if var textToPaste = finalPastedText, transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
-            if case .trialExpired = licenseViewModel.licenseState {
-                textToPaste = """
-                    Your trial has expired. Upgrade to VoiceInk Pro at tryvoiceink.com/buy
-                    \n\(textToPaste)
-                    """
-            }
+            
+            // Trial check removed - app is always licensed
+            // if case .trialExpired = licenseViewModel.licenseState {
+            //     text = """
+            //         Your trial has expired. Upgrade to VoiceInk Pro at tryvoiceink.com/buy
+            //         \n\(text)
+            //         """
+            // }
 
             let shouldAddSpace = UserDefaults.standard.object(forKey: "AppendTrailingSpace") as? Bool ?? true
             if shouldAddSpace {
